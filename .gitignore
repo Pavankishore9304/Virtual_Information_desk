@@ -1,0 +1,26 @@
+# Environment variables and secrets
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Virtual environment folder
+# Replace 'vid_project_stable' with your actual venv name if different
+vid_project_stable/
+venv/
+env/
+.venv/
+
+# Processed data and large files
+# The vector store should be rebuilt from source, not stored in git
+data/documents/processed/
+
+# Temporary and archived data
+data/staging/
+data/archive/
+
+# IDE and OS specific files
+.vscode/
+.idea/
+.DS_Store
