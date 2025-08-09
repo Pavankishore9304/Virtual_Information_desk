@@ -1,8 +1,9 @@
 import streamlit as st
 import os
-import google.generativeai as genai
 from dotenv import load_dotenv
 import json
+import re
+import google.generativeai as genai # Add this import
 
 from agents.planner import PlannerAgent
 from agents.text_to_sql import TextToSQLAgent
@@ -16,11 +17,6 @@ from core.db.database import get_db
 def initialize_agents_and_services():
     print("🚀 Initializing Agents and Services...")
     load_dotenv()
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("API key not found. Please set GOOGLE_API_KEY in your .env file.")
-    genai.configure(api_key=api_key)
-
     db_session = next(get_db())
     vector_store = VectorStore("data/documents/processed")
 
@@ -57,25 +53,41 @@ def run_agentic_pipeline(user_query: str, agents: dict):
     yield status_update
     
     collected_context = []
-    for i, step in enumerate(plan):
-        sub_query = step.get("sub_query")
+    # This dictionary will store the results of each step
+    step_results = {}
+
+    for step in plan:
+        step_num = step.get("step")
+        thought = step.get("thought")
         tool = step.get("tool")
-        
-        step_update = f"\n  - Step {i+1}: Executing '{sub_query}' using tool '{tool}'"
+        sub_query = step.get("sub_query")
+
+        step_update = f"\n  - Step {step_num}: {thought}"
         print(step_update)
         yield step_update
 
+        # ** NEW: Check for and substitute results from previous steps **
+        # This regex finds all instances of {{step_N_result}}
+        placeholders = re.findall(r"\{\{step_(\d+)_result\}\}", sub_query)
+        for placeholder_step_num in placeholders:
+            prev_step_result = step_results.get(int(placeholder_step_num))
+            if prev_step_result:
+                sub_query = sub_query.replace(f"{{{{step_{placeholder_step_num}_result}}}}", f'"{prev_step_result}"')
+        
+        yield f"    - Executing with tool '{tool}': '{sub_query}'"
+
+        result = ""
         if tool == "SQL":
             result = agents["text_to_sql"].process(sub_query)
-            collected_context.append(f"Result for '{sub_query}':\n{result}")
         elif tool == "VECTOR_SEARCH":
             result = execute_rag_pipeline(sub_query, agents)
-            collected_context.append(f"Information regarding '{sub_query}':\n{result}")
         elif tool == "GENERAL":
             result = "This part of the query is conversational or cannot be answered by the available tools."
-            collected_context.append(result)
         
-        yield f"    - Tool '{tool}' finished."
+        # Store the result of the current step
+        step_results[step_num] = result
+        collected_context.append(f"Result for Step {step_num} ('{sub_query}'):\n{result}")
+        yield f"    - Step {step_num} finished."
 
     status_update = "\n✍️ [Final Agent: Synthesizer] Generating final answer..."
     print(status_update)

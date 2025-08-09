@@ -5,7 +5,6 @@ from core.llm.llm_client import generate_response
 
 class PlannerAgent:
     def __init__(self):
-        # The prompt string is now syntactically correct.
         self.prompt_template = (
             "You are an expert planner. Your task is to decompose a query into a sequence of tool calls. "
             "Return ONLY a JSON array. No prose, no markdown.\n"
@@ -13,7 +12,7 @@ class PlannerAgent:
             "Rules:\n"
             "- Isolate greetings and conversational text into a separate `GENERAL` tool step.\n"
             "- Use `SQL` for specific, factual lookups (counts, credits, exact names).\n"
-            "- Use `VECTOR_SEARCH` for descriptive, open-ended, or explanatory questions (objectives, history, 'tell me about').\n"
+- Use `VECTOR_SEARCH` for descriptive, open-ended, or explanatory questions (objectives, history, 'tell me about').\n"
             "- If a query requires both factual filtering (SQL) and descriptive info (VECTOR_SEARCH), create a multi-step plan.\n"
             "- Pass prior results using `{{{{step_N_result}}}}`.\n"
             "Schema for SQL tool:\n{db_summary}\n"
