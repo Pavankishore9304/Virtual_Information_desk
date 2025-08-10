@@ -11,17 +11,22 @@ class TextToSQLAgent:
         
         # The initial prompt for the first attempt
         self.base_prompt_template = """
-        You are an expert PostgreSQL assistant. Your task is to convert a natural language question into a SINGLE, executable SQL query.
-        - If a column name contains spaces, enclose it in double quotes (e.g., "subject name").
-        - Base your query ONLY on the schema provided below. Do not invent columns or tables.
-        - If the question cannot be answered by the schema, return only the text: "Error: Cannot answer with SQL."
+        You are an expert PostgreSQL assistant. Convert the natural language question to a SINGLE SQL query.
+        
+        CRITICAL RULES:
+        - Return ONLY the SQL query, no explanations, no text before/after
+        - Use ONLY the schema provided - do not invent columns or tables
+        - If column names have spaces, use double quotes
+        - For name searches, use ILIKE with % wildcards for partial matching (e.g., name ILIKE '%arya%')
+        - Consider name variations: "Arty" could be "Arti", partial names should match full names
+        - If cannot answer, return exactly: "Error: Cannot answer with SQL."
 
-        --- SCHEMA ---
+        SCHEMA:
         {db_schema}
-        --- END SCHEMA ---
 
-        User Query: "{user_query}"
-        SQL Query:
+        Query: "{user_query}"
+        
+        SQL:
         """
 
         # A special prompt used for self-correction on retries
@@ -46,6 +51,50 @@ class TextToSQLAgent:
         Your Corrected, New SQL Query:
         """
 
+    def _extract_sql_from_response(self, response: str) -> str:
+        """Extract clean SQL from LLM response that may contain explanatory text."""
+        # Remove common prefixes and explanations
+        response = response.replace('`', '').replace('```sql', '').replace('```', '').strip()
+        
+        # Check if it's an error response
+        if "Error: Cannot answer with SQL." in response or response.startswith("Error:"):
+            return "Error: Cannot answer with SQL."
+        
+        # Split by lines and look for SQL keywords
+        lines = response.split('\n')
+        sql_lines = []
+        capturing = False
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Start capturing when we see SQL keywords
+            if any(line.upper().startswith(keyword) for keyword in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'WITH']):
+                capturing = True
+                sql_lines.append(line)
+            elif capturing and line.endswith(';'):
+                # End of SQL statement
+                sql_lines.append(line)
+                break
+            elif capturing:
+                sql_lines.append(line)
+        
+        if sql_lines:
+            return ' '.join(sql_lines)
+        
+        # If no SQL found but contains SELECT etc, extract the line
+        for line in lines:
+            line = line.strip()
+            if any(keyword in line.upper() for keyword in ['SELECT', 'INSERT', 'UPDATE', 'DELETE']):
+                # Extract just this line if it looks like SQL
+                if 'FROM' in line.upper() or 'WHERE' in line.upper():
+                    return line + (';' if not line.endswith(';') else '')
+        
+        # Final fallback: return error if no SQL found
+        return "Error: Cannot answer with SQL."
+
     def _generate_sql(self, user_query: str, failed_sql: str = None, error_message: str = None) -> str:
         """Generates SQL using either the base or retry prompt."""
         if failed_sql and error_message:
@@ -62,7 +111,9 @@ class TextToSQLAgent:
                 db_schema=get_db_schema_for_sql_agent(),
                 user_query=user_query
             )
-        return generate_response(prompt, role="TEXT_TO_SQL")
+        
+        response = generate_response(prompt, role="TEXT_TO_SQL")
+        return self._extract_sql_from_response(response)
 
     def _convert_to_roman(self, num: int) -> str:
         val = [10, 9, 5, 4, 1]; syb = ["X", "IX", "V", "IV", "I"]

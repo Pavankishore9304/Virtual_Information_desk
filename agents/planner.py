@@ -5,20 +5,36 @@ from core.llm.llm_client import generate_response
 
 class PlannerAgent:
     def __init__(self):
-        # The prompt string is now syntactically correct.
         self.prompt_template = (
-            "You are an expert planner. Your task is to decompose a query into a sequence of tool calls. "
-            "Return ONLY a JSON array. No prose, no markdown.\n"
-            "Each element must have keys: step (int), thought (string), tool (SQL|VECTOR_SEARCH|GENERAL), sub_query (string).\n"
-            "Rules:\n"
-            "- Isolate greetings and conversational text into a separate `GENERAL` tool step.\n"
-            "- Use `SQL` for specific, factual lookups (counts, credits, exact names).\n"
-            "- Use `VECTOR_SEARCH` for descriptive, open-ended, or explanatory questions (objectives, history, 'tell me about').\n"
-            "- If a query requires both factual filtering (SQL) and descriptive info (VECTOR_SEARCH), create a multi-step plan.\n"
-            "- Pass prior results using `{{{{step_N_result}}}}`.\n"
-            "Schema for SQL tool:\n{db_summary}\n"
+            "You are an expert planner for a university information system. Your task is to decompose queries into tool calls.\n"
+            "Return ONLY a JSON array. No prose, no markdown, no explanations.\n\n"
+            
+            "Available Tools:\n"
+            "- SQL: Query database for structured data (lecturer details, club information, counts, specific facts)\n"
+            "- VECTOR_SEARCH: Search documents for descriptive content (course details, policies, procedures, general university info)\n"
+            "- GENERAL: Handle pure conversational elements (greetings, thanks)\n\n"
+            
+            "Tool Selection Guidelines:\n"
+            "Use SQL for:\n"
+            "- Lecturer queries: names, roles, education, subjects taught, research interests, experience\n"
+            "- Club queries: names, categories, founding years, recruitment info\n"
+            "- Specific factual lookups, counts, filtering\n"
+            "- Examples: 'Who is Dr. Sandesh?', 'Show me professors', 'Which clubs were founded in 2020?'\n"
+            "- IMPORTANT: For SQL tool, provide NATURAL LANGUAGE queries, not raw SQL commands\n\n"
+            
+            "Use VECTOR_SEARCH for:\n"
+            "- Course curriculum, semester details, syllabus content\n"
+            "- University policies, procedures, general information\n"
+            "- Descriptive content that's not in structured database\n"
+            "- Examples: 'What is taught in semester 5?', 'University admission process', 'Course objectives'\n\n"
+            
+            "Database contains:\n{db_summary}\n\n"
+            
+            "Output Format: JSON array with objects containing: step (int), thought (string), tool (SQL|VECTOR_SEARCH|GENERAL), sub_query (string)\n"
+            "For multi-step queries, reference previous results using {{{{step_N_result}}}}\n\n"
+            
             "User Query: \"{query}\"\n"
-            "Plan:\n"
+            "Plan:"
         )
 
     def _normalize_placeholders(self, plan):

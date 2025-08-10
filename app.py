@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 import json
 import re
-import google.generativeai as genai # Add this import
 
 from agents.planner import PlannerAgent
 from agents.text_to_sql import TextToSQLAgent

@@ -1,10 +1,10 @@
 # Filepath: e:\capstone 2024\CAPSTONE REBIRTH\Build_From_Scratch\VID\vid-backend\requirements.txt
 # --- Core AI & LangChain Libraries ---
-google-generativeai==0.5.4
 langchain==0.1.20
 langchain-core==0.1.52
 langchain-community==0.0.38
-langchain-google-genai==1.0.2
+sentence-transformers==3.0.1
+transformers==4.44.2
 
 # --- Vector Store & Document Processing ---
 faiss-cpu==1.8.0
@@ -16,6 +16,8 @@ watchdog==4.0.1
 streamlit==1.35.0
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
+Flask==3.0.0
+Flask-Cors==4.0.0
 
 # --- Database ---
 SQLAlchemy==2.0.29

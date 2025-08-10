@@ -1,5 +1,5 @@
 import os
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from typing import List
@@ -7,7 +7,12 @@ from typing import List
 class VectorStore:
     def __init__(self, store_path: str):
         self.store_path = store_path
-        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        # Using a lightweight, open-source embedding model
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'},
+            encode_kwargs={'normalize_embeddings': True}
+        )
         self.db = self._load_store()
 
     def _load_store(self):

@@ -19,6 +19,7 @@ data/documents/processed/
 # Temporary and archived data
 data/staging/
 data/archive/
+temp_audio/
 
 # IDE and OS specific files
 .vscode/
