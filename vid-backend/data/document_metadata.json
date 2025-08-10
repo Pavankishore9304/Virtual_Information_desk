@@ -1,0 +1,38 @@
+{
+  "Clubs in PES University EC campus": {
+    "filename": "Clubs in PES University EC campus.pdf",
+    "num_chunks": 34
+  },
+  "data2": {
+    "filename": "data2.pdf",
+    "num_chunks": 3
+  },
+  "Events": {
+    "filename": "Events.pdf",
+    "num_chunks": 6
+  },
+  "Faculty Data Extraction from PES_": {
+    "filename": "Faculty Data Extraction from PES_.pdf",
+    "num_chunks": 31
+  },
+  "PES_Stu_placements_history_etc": {
+    "filename": "PES_Stu_placements_history_etc.pdf",
+    "num_chunks": 34
+  },
+  "PES_University_data": {
+    "filename": "PES_University_data.pdf",
+    "num_chunks": 30
+  },
+  "sports": {
+    "filename": "sports.pdf",
+    "num_chunks": 1
+  },
+  "Staffs_details": {
+    "filename": "Staffs_details.pdf",
+    "num_chunks": 174
+  },
+  "UG-CSE-2024": {
+    "filename": "UG-CSE-2024.pdf",
+    "num_chunks": 224
+  }
+}
